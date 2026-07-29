@@ -1,0 +1,20 @@
+# Cassette pairings backup -- captured 2026-07-29 from GET /api/cards
+#
+# These live only in the ESP32's LittleFS partition. `pio run -t erase`, a
+# change to board_build.partitions, or filesystem corruption wipes them.
+#
+# To restore: paste these lines into the serial monitor (115200 baud), one at
+# a time or all at once. Order does not matter.
+#
+# To refresh this file: run EXPORT on the serial console, or
+#   curl -s http://cassette.local/api/cards
+
+MAP 0453A2F2E86B80 spotify:track:5WOSNVChcadlsCRiqXE45K
+MAP 04355DF2E86B80 spotify:track:7EPJbZ3UygY2fqhOdqOSaT
+MAP 044152F2E86B81 spotify:track:43iIQbw5hx986dUEZbr3eN
+MAP 04F286F2E86B80 spotify:track:65FftemJ1DbbZ45DUfHJXE
+MAP 04757BF2E86B81 spotify:track:0DiWol3AO6WpXZgp0goxAV
+MAP 0421BB02E96B81 spotify:track:0DrRmN4VMOdgQv24VajFpu
+MAP 04F56DF2E86B80 spotify:track:4kLQd1onq9VkWAme7VOG8b
+MAP 04635DF2E86B80 spotify:track:5UD3C8p86e8GWso14SHLa0
+MAP 044F4AF2E86B81 spotify:track:2mvffzYUJ9Ld9xhsF5DUjU

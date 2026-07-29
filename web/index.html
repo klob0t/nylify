@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d0d10" />
+    <title>Nylify</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Blurred album art bled across the background. Purely decorative. -->
+    <div id="backdrop" aria-hidden="true"></div>
+
+    <!-- Reachability of the ESP32 itself. Hover for IP and signal. -->
+    <div id="conn" class="conn" data-state="init" title="">
+      <span class="conn-dot"></span>
+      <span id="conn-text">connecting</span>
+    </div>
+
+    <main>
+      <!-- Two complete records, so the whole disc travels -- circle, grooves,
+           spindle and all -- not just the artwork inside a fixed mask. The
+           disc translates; the image inside it rotates. -->
+      <div class="stage" id="stage">
+        <div class="disc placeholder" id="disc-empty" aria-hidden="true">
+          <svg class="disc-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10.5" />
+            <circle cx="12" cy="12" r="3.5" />
+          </svg>
+        </div>
+
+        <div class="disc" id="disc-a"><img alt="" /></div>
+        <div class="disc" id="disc-b"><img alt="" /></div>
+      </div>
+
+      <div class="meta">
+        <h1 id="track">—</h1>
+        <p id="artist"></p>
+        <p id="device" class="device" hidden></p>
+      </div>
+
+      <!-- Surfaces only while an unpaired tag is sitting on the reader. -->
+      <form id="pair-form" hidden>
+        <label for="pair-uri">
+          Unpaired cassette <code id="pair-uid"></code>
+        </label>
+        <div class="pair-row">
+          <input
+            id="pair-uri"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Paste a Spotify link…"
+          />
+          <button type="submit" id="pair-btn">Pair</button>
+        </div>
+        <p id="pair-error" class="error" hidden></p>
+      </form>
+
+      <!-- Surfaces only when something is wrong. -->
+      <p id="status" class="status" hidden></p>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

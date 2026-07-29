@@ -1,0 +1,10 @@
+.pio/
+.vscode/
+!.vscode/extensions.json
+
+# Real credentials live here. Copy from secrets.example.h.
+include/secrets.h
+
+# Python helper venv
+tools/.venv/
+tools/__pycache__/

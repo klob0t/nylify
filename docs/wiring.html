@@ -1,0 +1,639 @@
+<title>Wiring — RFID Cassette Player</title>
+
+<style>
+  :root {
+    --bg:        #F2F5F6;
+    --surface:   #FFFFFF;
+    --surface-2: #E7ECEE;
+    --line:      #CBD5D9;
+    --line-soft: #DFE6E9;
+    --ink:       #131C21;
+    --ink-2:     #47585F;
+    --ink-3:     #6F8188;
+    --accent:    #B45A1E;
+    --accent-bg: #FBEDE2;
+
+    /* Bus colors — each wire group gets one, so the chips encode which
+       bus a connection belongs to rather than just adding color. */
+    --bus-pwr:  #C62F2F;
+    --bus-gnd:  #3A4A54;
+    --bus-spi:  #A87508;
+    --bus-i2c:  #0E7C8C;
+    --bus-rst:  #7B4BC4;
+
+    --danger:    #C62F2F;
+    --danger-bg: #FBE9E9;
+    --ok:        #1F7A4D;
+
+    --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, "SF Mono", Menlo, monospace;
+    --font-body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+    --r: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #0D1418;
+      --surface:   #141E23;
+      --surface-2: #1B282E;
+      --line:      #2C3C44;
+      --line-soft: #223037;
+      --ink:       #E6EDEF;
+      --ink-2:     #A3B4BB;
+      --ink-3:     #74888F;
+      --accent:    #E08A47;
+      --accent-bg: #2A1D12;
+
+      --bus-pwr:  #F2706E;
+      --bus-gnd:  #90A4AE;
+      --bus-spi:  #E0B23F;
+      --bus-i2c:  #3FBACE;
+      --bus-rst:  #A98AE6;
+
+      --danger:    #F2706E;
+      --danger-bg: #2B1517;
+      --ok:        #4FBF88;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0D1418;
+    --surface:   #141E23;
+    --surface-2: #1B282E;
+    --line:      #2C3C44;
+    --line-soft: #223037;
+    --ink:       #E6EDEF;
+    --ink-2:     #A3B4BB;
+    --ink-3:     #74888F;
+    --accent:    #E08A47;
+    --accent-bg: #2A1D12;
+    --bus-pwr:  #F2706E;
+    --bus-gnd:  #90A4AE;
+    --bus-spi:  #E0B23F;
+    --bus-i2c:  #3FBACE;
+    --bus-rst:  #A98AE6;
+    --danger:    #F2706E;
+    --danger-bg: #2B1517;
+    --ok:        #4FBF88;
+  }
+
+  :root[data-theme="light"] {
+    --bg:        #F2F5F6;
+    --surface:   #FFFFFF;
+    --surface-2: #E7ECEE;
+    --line:      #CBD5D9;
+    --line-soft: #DFE6E9;
+    --ink:       #131C21;
+    --ink-2:     #47585F;
+    --ink-3:     #6F8188;
+    --accent:    #B45A1E;
+    --accent-bg: #FBEDE2;
+    --bus-pwr:  #C62F2F;
+    --bus-gnd:  #3A4A54;
+    --bus-spi:  #A87508;
+    --bus-i2c:  #0E7C8C;
+    --bus-rst:  #7B4BC4;
+    --danger:    #C62F2F;
+    --danger-bg: #FBE9E9;
+    --ok:        #1F7A4D;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  /* ---- header ---- */
+  .masthead { display: flex; flex-direction: column; gap: .6rem; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-mono);
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    line-height: 1.15;
+  }
+  .standfirst { color: var(--ink-2); max-width: 60ch; }
+
+  /* ---- generic section ---- */
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  h2 {
+    font-family: var(--font-mono);
+    font-size: .82rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  h3 {
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  p { max-width: 68ch; }
+  a { color: var(--accent); }
+
+  /* ---- callouts ---- */
+  .note {
+    display: flex;
+    gap: .9rem;
+    padding: 1rem 1.15rem;
+    border-radius: var(--r);
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .note-mark {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    line-height: 1.5;
+    flex: none;
+  }
+  .note-body { display: flex; flex-direction: column; gap: .35rem; }
+  .note-body p { max-width: 62ch; }
+  .note strong { font-weight: 700; }
+
+  .note.alarm {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+  }
+  .note.alarm .note-mark { color: var(--danger); }
+
+  /* ---- diagram ---- */
+  figure {
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .scroller { overflow-x: auto; }
+  svg { display: block; min-width: 640px; width: 100%; height: auto; }
+  figcaption {
+    padding: .75rem 1.15rem;
+    border-top: 1px solid var(--line-soft);
+    color: var(--ink-3);
+    font-size: .84rem;
+    background: var(--surface-2);
+  }
+
+  .s-board  { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.5; }
+  .s-label  { font-family: var(--font-mono); font-size: 13px; font-weight: 700; fill: var(--ink); }
+  .s-sub    { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); }
+  .s-pin    { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-2); }
+  .s-wire   { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+  /* A dot means the wires join; a bare crossing means they don't. */
+  .s-dot    { stroke: var(--surface); stroke-width: 2; }
+  .s-rail   { font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
+
+  /* ---- tables ---- */
+  .tablecard {
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .tablecard > header {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    flex-wrap: wrap;
+    padding: .85rem 1.15rem;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--surface-2);
+  }
+  .tablecard > header h3 { font-size: .9rem; }
+  .tablecard > header .hint {
+    font-size: .8rem;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: .6rem 1.15rem;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: .92rem;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  thead th {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  td.pin {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  td.role { color: var(--ink-2); font-size: .86rem; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .chip::before {
+    content: "";
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--c, var(--ink-3));
+    flex: none;
+  }
+  .b-pwr { --c: var(--bus-pwr); }
+  .b-gnd { --c: var(--bus-gnd); }
+  .b-spi { --c: var(--bus-spi); }
+  .b-i2c { --c: var(--bus-i2c); }
+  .b-rst { --c: var(--bus-rst); }
+
+  tr.muted td { color: var(--ink-3); }
+  tr.muted td.pin { font-weight: 500; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: var(--surface-2);
+    padding: .1em .38em;
+    border-radius: 3px;
+  }
+  .note code, td code { background: transparent; padding: 0; }
+
+  pre {
+    font-family: var(--font-mono);
+    font-size: .82rem;
+    line-height: 1.55;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+  }
+  pre .ok  { color: var(--ok); }
+  pre .bad { color: var(--danger); }
+  pre .dim { color: var(--ink-3); }
+
+  ol.steps {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    padding-left: 1.35rem;
+  }
+  ol.steps li { padding-left: .3rem; }
+  ol.steps li::marker {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.4rem;
+    padding: .85rem 1.15rem;
+    border-top: 1px solid var(--line-soft);
+    background: var(--surface-2);
+  }
+
+  @media (max-width: 34rem) {
+    th, td { padding-left: .8rem; padding-right: .8rem; }
+    .wrap { padding-top: 2rem; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">RFID Cassette Player</div>
+    <h1>Wiring the ESP32, RC522 and OLED</h1>
+    <p class="standfirst">
+      Eleven connections across two buses. Two of them are where almost every
+      build of this goes wrong, so they're called out first.
+    </p>
+  </header>
+
+  <section>
+    <h2>Read this before you strip a wire</h2>
+
+    <div class="note alarm">
+      <div class="note-mark">!</div>
+      <div class="note-body">
+        <h3>The RC522's RST goes to GPIO 27 — not GPIO 22</h3>
+        <p>
+          Nearly every RC522 tutorial puts RST on GPIO 22. On this build that pin
+          is the OLED's <code>SCL</code>, and the two cannot share it. Follow a
+          stock tutorial here and you get a dead reader <em>and</em> a dead screen,
+          with nothing in the logs to explain why.
+        </p>
+      </div>
+    </div>
+
+    <div class="note alarm">
+      <div class="note-mark">!</div>
+      <div class="note-body">
+        <h3>The RC522 runs on 3.3&nbsp;V only</h3>
+        <p>
+          Its <code>VCC</code> pin is not 5&nbsp;V tolerant. Connecting it to
+          <code>VIN</code> is the single most common way people destroy one, and
+          the damage is permanent. Use the <code>3V3</code> pin. The OLED is
+          equally happy on 3.3&nbsp;V, so nothing in this build touches
+          <code>VIN</code> at all.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The connections</h2>
+
+    <figure>
+      <div class="scroller">
+        <svg viewBox="0 0 900 460" role="img"
+             aria-label="Logical wiring diagram: RC522 connects to the ESP32 over SPI plus reset and power; the SSD1306 OLED connects over I2C plus power. Both modules share 3.3 volt and ground rails.">
+
+          <!-- ================= RC522 ================= -->
+          <rect class="s-board" x="24" y="46" width="152" height="300" rx="8"></rect>
+          <text class="s-label" x="40" y="76">RC522</text>
+          <text class="s-sub"   x="40" y="92">RFID reader</text>
+          <text class="s-sub"   x="40" y="322">header order as</text>
+          <text class="s-sub"   x="40" y="334">printed on module</text>
+
+          <text class="s-pin" x="162" y="119" text-anchor="end">SDA</text>
+          <text class="s-pin" x="162" y="147" text-anchor="end">SCK</text>
+          <text class="s-pin" x="162" y="175" text-anchor="end">MOSI</text>
+          <text class="s-pin" x="162" y="203" text-anchor="end">MISO</text>
+          <text class="s-pin" x="162" y="231" text-anchor="end">IRQ</text>
+          <text class="s-pin" x="162" y="259" text-anchor="end">GND</text>
+          <text class="s-pin" x="162" y="287" text-anchor="end">RST</text>
+          <text class="s-pin" x="162" y="315" text-anchor="end">3.3V</text>
+
+          <!-- ================= ESP32 ================= -->
+          <rect class="s-board" x="374" y="30" width="164" height="356" rx="8"></rect>
+          <text class="s-label" x="456" y="60"  text-anchor="middle">ESP32</text>
+          <text class="s-sub"   x="456" y="76"  text-anchor="middle">DevKit v1</text>
+          <text class="s-pin"   x="414" y="374" text-anchor="middle">GND</text>
+          <text class="s-pin"   x="478" y="374" text-anchor="middle">3V3</text>
+
+          <text class="s-pin" x="390" y="119">D5</text>
+          <text class="s-pin" x="390" y="147">D18</text>
+          <text class="s-pin" x="390" y="175">D23</text>
+          <text class="s-pin" x="390" y="203">D19</text>
+          <text class="s-pin" x="390" y="287">D27</text>
+
+          <text class="s-pin" x="522" y="147" text-anchor="end">D21</text>
+          <text class="s-pin" x="522" y="175" text-anchor="end">D22</text>
+
+          <!-- ================= OLED ================= -->
+          <rect class="s-board" x="736" y="96" width="140" height="180" rx="8"></rect>
+          <text class="s-label" x="806" y="126" text-anchor="middle">SSD1306</text>
+          <text class="s-sub"   x="806" y="142" text-anchor="middle">0.96" OLED</text>
+
+          <text class="s-pin" x="750" y="175">SDA</text>
+          <text class="s-pin" x="750" y="203">SCL</text>
+          <text class="s-pin" x="750" y="231">VCC</text>
+          <text class="s-pin" x="750" y="259">GND</text>
+
+          <!-- ============ RC522 -> ESP32 ============ -->
+          <path class="s-wire" stroke="var(--bus-spi)" d="M176 115 H374"></path>
+          <path class="s-wire" stroke="var(--bus-spi)" d="M176 143 H374"></path>
+          <path class="s-wire" stroke="var(--bus-spi)" d="M176 171 H374"></path>
+          <path class="s-wire" stroke="var(--bus-spi)" d="M176 199 H374"></path>
+          <path class="s-wire" stroke="var(--bus-rst)" d="M176 283 H374"></path>
+
+          <!-- ============ ESP32 -> OLED (I2C) ============ -->
+          <path class="s-wire" stroke="var(--bus-i2c)" d="M538 143 H700 Q712 143 712 155 V171 H736"></path>
+          <path class="s-wire" stroke="var(--bus-i2c)" d="M538 171 H676 Q688 171 688 183 V199 H736"></path>
+
+          <!-- ============ shared power rails ============
+               Everything drops to two rails rather than daisy-chaining, which
+               is how it actually gets built on a breadboard. -->
+          <path class="s-wire" stroke="var(--bus-pwr)" d="M236 406 H700"></path>
+          <path class="s-wire" stroke="var(--bus-gnd)" d="M206 432 H676"></path>
+
+          <text class="s-rail" x="228" y="410" text-anchor="end" fill="var(--bus-pwr)">3V3</text>
+          <text class="s-rail" x="198" y="436" text-anchor="end" fill="var(--bus-gnd)">GND</text>
+
+          <!-- stubs down to the rails -->
+          <path class="s-wire" stroke="var(--bus-pwr)" d="M176 311 H236 V406"></path>
+          <path class="s-wire" stroke="var(--bus-gnd)" d="M176 255 H206 V432"></path>
+          <path class="s-wire" stroke="var(--bus-pwr)" d="M478 386 V406"></path>
+          <path class="s-wire" stroke="var(--bus-gnd)" d="M414 386 V432"></path>
+          <path class="s-wire" stroke="var(--bus-pwr)" d="M736 231 H700 V406"></path>
+          <path class="s-wire" stroke="var(--bus-gnd)" d="M736 259 H676 V432"></path>
+
+          <!-- junction dots: where a stub actually joins its rail -->
+          <circle class="s-dot" cx="236" cy="406" r="4" fill="var(--bus-pwr)"></circle>
+          <circle class="s-dot" cx="478" cy="406" r="4" fill="var(--bus-pwr)"></circle>
+          <circle class="s-dot" cx="700" cy="406" r="4" fill="var(--bus-pwr)"></circle>
+          <circle class="s-dot" cx="206" cy="432" r="4" fill="var(--bus-gnd)"></circle>
+          <circle class="s-dot" cx="414" cy="432" r="4" fill="var(--bus-gnd)"></circle>
+          <circle class="s-dot" cx="676" cy="432" r="4" fill="var(--bus-gnd)"></circle>
+
+          <!-- IRQ is deliberately unused -->
+          <text class="s-sub" x="190" y="235">not connected</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span class="chip b-spi">SPI</span>
+        <span class="chip b-i2c">I²C</span>
+        <span class="chip b-rst">Reset</span>
+        <span class="chip b-pwr">3.3 V</span>
+        <span class="chip b-gnd">Ground</span>
+      </div>
+      <figcaption>
+        Logical layout, not a board photo. Pin <em>positions</em> differ between
+        DevKit revisions, so match the silkscreen labels — <code>D5</code>,
+        <code>D18</code>, <code>D19</code>, <code>D21</code>, <code>D22</code>,
+        <code>D23</code>, <code>D27</code> — rather than counting pins along an edge.
+        On the rails, a dot is a join; lines that cross without one aren't connected.
+      </figcaption>
+    </figure>
+
+    <div class="tablecard">
+      <header>
+        <h3>RC522 → ESP32</h3>
+        <span class="hint">hardware VSPI</span>
+      </header>
+      <table>
+        <thead>
+          <tr><th>RC522</th><th>ESP32</th><th>Bus</th><th>Carries</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="pin">SDA</td><td class="pin">D5</td><td><span class="chip b-spi">SPI</span></td><td class="role">Chip select — picks the reader</td></tr>
+          <tr><td class="pin">SCK</td><td class="pin">D18</td><td><span class="chip b-spi">SPI</span></td><td class="role">Clock</td></tr>
+          <tr><td class="pin">MOSI</td><td class="pin">D23</td><td><span class="chip b-spi">SPI</span></td><td class="role">ESP32 → reader</td></tr>
+          <tr><td class="pin">MISO</td><td class="pin">D19</td><td><span class="chip b-spi">SPI</span></td><td class="role">Reader → ESP32</td></tr>
+          <tr><td class="pin">RST</td><td class="pin">D27</td><td><span class="chip b-rst">Reset</span></td><td class="role">Not 22 — that's the OLED's clock</td></tr>
+          <tr><td class="pin">3.3V</td><td class="pin">3V3</td><td><span class="chip b-pwr">Power</span></td><td class="role">Never VIN</td></tr>
+          <tr><td class="pin">GND</td><td class="pin">GND</td><td><span class="chip b-gnd">Ground</span></td><td class="role">—</td></tr>
+          <tr class="muted"><td class="pin">IRQ</td><td class="pin">—</td><td></td><td class="role">Leave unconnected; the firmware polls</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tablecard">
+      <header>
+        <h3>SSD1306 OLED → ESP32</h3>
+        <span class="hint">I²C, address 0x3C</span>
+      </header>
+      <table>
+        <thead>
+          <tr><th>OLED</th><th>ESP32</th><th>Bus</th><th>Carries</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="pin">SDA</td><td class="pin">D21</td><td><span class="chip b-i2c">I²C</span></td><td class="role">Data</td></tr>
+          <tr><td class="pin">SCL</td><td class="pin">D22</td><td><span class="chip b-i2c">I²C</span></td><td class="role">Clock</td></tr>
+          <tr><td class="pin">VCC</td><td class="pin">3V3</td><td><span class="chip b-pwr">Power</span></td><td class="role">—</td></tr>
+          <tr><td class="pin">GND</td><td class="pin">GND</td><td><span class="chip b-gnd">Ground</span></td><td class="role">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <div class="note-mark">›</div>
+      <div class="note-body">
+        <h3>Check your OLED's pin order before connecting power</h3>
+        <p>
+          These modules ship with two different header layouts —
+          <code>GND VCC SCL SDA</code> and <code>VCC GND SCL SDA</code>. The
+          silkscreen is the only authority. Getting the first two backwards
+          feeds reversed polarity straight into the panel and usually kills it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Verify before you trust it</h2>
+    <p>
+      Wire it up, flash, then open the serial monitor at 115200 and type
+      <code>DIAG</code>. It probes each bus separately, so a fault points at one
+      module instead of leaving you guessing.
+    </p>
+
+<pre><span class="dim">&gt; DIAG</span>
+
+=== wiring check ===============================
+
+I2C bus (OLED)  SDA=21 SCL=22
+  device at 0x3C  <span class="ok">&lt;- SSD1306 OLED</span>
+
+SPI bus (RC522)  SS=5 SCK=18 MOSI=23 MISO=19 RST=27
+  VersionReg = <span class="ok">0x92</span>  (MFRC522 v2.0 -- OK)
+  antenna gain = 0x70 (max)
+  hold a tag on the reader now; a UID should print below
+================================================
+
+<span class="dim">[card] on  04A2B3C1</span></pre>
+
+    <p>
+      Two good lines and you're done: a device at <code>0x3C</code>, and a
+      version register of <code>0x91</code>, <code>0x92</code> or
+      <code>0x12</code>. Anything else is diagnosed below.
+    </p>
+  </section>
+
+  <section>
+    <h2>When it doesn't work</h2>
+
+    <div class="tablecard">
+      <table>
+        <thead>
+          <tr><th>What you see</th><th>What it means</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="pin">VersionReg&nbsp;=&nbsp;0x00</td>
+            <td class="role">
+              MISO is being held low — the reader isn't driving the bus at all.
+              Usually no power, or <code>MISO</code>/<code>MOSI</code> swapped.
+              Check <code>VCC</code> is on <code>3V3</code>.
+            </td>
+          </tr>
+          <tr>
+            <td class="pin">VersionReg&nbsp;=&nbsp;0xFF</td>
+            <td class="role">
+              MISO floating high — nothing is answering. Same causes as
+              <code>0x00</code>, and also what you get if the module was already
+              killed by 5&nbsp;V.
+            </td>
+          </tr>
+          <tr>
+            <td class="pin">I²C: nothing found</td>
+            <td class="role">
+              <code>SDA</code> and <code>SCL</code> swapped, or the OLED has no
+              power. Both are on <code>3V3</code>, never <code>VIN</code>.
+            </td>
+          </tr>
+          <tr>
+            <td class="pin">Found 0x3D, not 0x3C</td>
+            <td class="role">
+              A normal variant. Set <code>OLED_I2C_ADDR</code> to
+              <code>0x3D</code> in <code>include/config.h</code> and reflash.
+            </td>
+          </tr>
+          <tr>
+            <td class="pin">Version OK, no tag reads</td>
+            <td class="role">
+              An antenna range problem, not wiring. Bring the tag closer, and
+              mount it against the inside face of the shell rather than deep
+              inside it.
+            </td>
+          </tr>
+          <tr>
+            <td class="pin">Works, then drops out</td>
+            <td class="role">
+              Nearly always header pins pressed in rather than soldered. Both
+              modules ship with loose headers.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <div class="note-mark">›</div>
+      <div class="note-body">
+        <h3>Solder the headers</h3>
+        <p>
+          Both modules arrive with the pin strips unattached. Friction-fitting
+          them into a breadboard mostly works, which is worse than not working —
+          you get intermittent faults that look like software bugs. The RC522 in
+          particular reads fine on the bench and then fails once it's inside a
+          cassette shell.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
