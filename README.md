@@ -295,6 +295,25 @@ it raises the transmitted field at the cost of current and heat.
 | `no refresh token` | run `TOKEN <...>` |
 | Pauses randomly while playing | raise `RFID_REMOVAL_DEBOUNCE` |
 | Pairings vanished | flash was erased; paste your `EXPORT` backup back in |
+| **Dead right after flashing** | see below — it's held in reset, not broken |
+| Web UI frozen, dot reads `stale Ns` | device is reachable but its Spotify task stopped; power-cycle |
+
+### The device looks dead immediately after `pio run -t upload`
+
+It isn't. `esptool` finishes with "Hard resetting via RTS pin", but the board can
+come back with the reset line still asserted — so it never boots, doesn't join
+WiFi, and every HTTP request to it times out.
+
+**Open the serial monitor once after flashing.** Opening the port toggles
+DTR/RTS and releases it:
+
+```
+pio device monitor
+```
+
+This is worth knowing before you conclude a change broke something. It produced
+several completely wrong diagnoses during development — including a firmware
+change being blamed and reverted when the device simply wasn't running.
 
 ## Layout
 
